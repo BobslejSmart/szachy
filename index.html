@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Szachy — Ucz się grać</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <h1>♛ Szachy</h1>
+            <p>Naucz się grać w szachy</p>
+        </div>
+    </header>
+
+    <main>
+        <div class="game-container">
+            <!-- Plansza -->
+            <div class="board-section">
+                <div id="board"></div>
+            </div>
+
+            <!-- Panel boczny -->
+            <div class="side-panel">
+
+                <!-- Status -->
+                <div class="status-box" id="status">Twoja kolej (Białe)</div>
+
+                <!-- Przyciski -->
+                <div class="controls">
+                    <button id="btn-new">Nowa gra</button>
+                    <button id="btn-undo">Cofnij ruch</button>
+                    <button id="btn-hint">Podpowiedź</button>
+                </div>
+
+                <!-- Poziom trudności -->
+                <div class="difficulty-row">
+                    <label for="difficulty">Poziom AI:</label>
+                    <select id="difficulty">
+                        <option value="1">Łatwy</option>
+                        <option value="2" selected>Średni</option>
+                        <option value="3">Trudny</option>
+                    </select>
+                </div>
+
+                <!-- Zbite figury -->
+                <div class="panel-card">
+                    <h3>Zbite figury</h3>
+                    <div id="captured-by-white"></div>
+                    <div id="captured-by-black"></div>
+                </div>
+
+                <!-- Historia ruchów -->
+                <div class="panel-card">
+                    <h3>Historia ruchów</h3>
+                    <div id="move-history"></div>
+                </div>
+
+                <!-- Wskazówki -->
+                <div class="panel-card tips-card">
+                    <h3>Wskazówka dla początkujących</h3>
+                    <div id="tip-text"></div>
+                </div>
+
+                <!-- Wartości figur -->
+                <div class="panel-card">
+                    <h3>Wartości figur</h3>
+                    <div class="piece-values">
+                        <span title="Pionek">♙ = 1</span>
+                        <span title="Skoczek">♘ = 3</span>
+                        <span title="Goniec">♗ = 3</span>
+                        <span title="Wieża">♖ = 5</span>
+                        <span title="Hetman">♕ = 9</span>
+                        <span title="Król">♔ = ∞</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Promocja pionka -->
+    <div id="promo-modal" class="modal hidden">
+        <div class="modal-box">
+            <p>Wybierz figurę do promocji:</p>
+            <div class="promo-choices">
+                <button data-piece="q">♕ Hetman</button>
+                <button data-piece="r">♖ Wieża</button>
+                <button data-piece="b">♗ Goniec</button>
+                <button data-piece="n">♘ Skoczek</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
