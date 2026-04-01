@@ -228,6 +228,43 @@ h3 {
 .piece-values span { cursor: default; }
 .piece-values span:hover { color: var(--accent-dark); }
 
+/* ── Collapsible panels ────────────────────────── */
+.panel-card.collapsible {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+    opacity: 0;
+    border-width: 0;
+    margin-bottom: 0;
+    transition:
+        max-height 0.45s ease,
+        opacity    0.45s ease,
+        padding    0.45s ease,
+        border-width 0.45s ease,
+        margin     0.45s ease;
+}
+.panel-card.collapsible.expanded {
+    max-height: 400px;
+    padding-top: 13px;
+    padding-bottom: 13px;
+    opacity: 1;
+    border-width: 1px;
+    margin-bottom: 0;
+}
+
+/* ── Tip layout ────────────────────────────────── */
+.tip-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 6px;
+    font-size: 1rem;
+}
+#tip-icon  { font-size: 1.2rem; }
+#tip-title { color: #065f46; }
+#tip-body  { font-size: 0.85rem; line-height: 1.6; color: #1e293b; }
+
 /* ── Promo modal ───────────────────────────────── */
 .modal {
     position: fixed; inset: 0;

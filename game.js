@@ -1,16 +1,16 @@
 'use strict';
 
-// ── Symbole i opisy figur ──────────────────────────────────────────────────
+// ── Symbole i nazwy figur ──────────────────────────────────────────────────
 const SYM = {
     wK:'♔', wQ:'♕', wR:'♖', wB:'♗', wN:'♘', wP:'♙',
     bK:'♚', bQ:'♛', bR:'♜', bB:'♝', bN:'♞', bP:'♟'
 };
 const NAMES = { K:'Król', Q:'Hetman', R:'Wieża', B:'Goniec', N:'Skoczek', P:'Pionek' };
 
-// ── Wartości figur (do AI) ──────────────────────────────────────────────────
+// ── Wartości figur ─────────────────────────────────────────────────────────
 const VAL = { p:100, n:320, b:330, r:500, q:900, k:20000 };
 
-// ── Tablice pozycyjne (Piece-Square Tables) — z perspektywy białych ────────
+// ── Tablice pozycyjne (PST) ────────────────────────────────────────────────
 const PST = {
     p:[  0,  0,  0,  0,  0,  0,  0,  0,
         50, 50, 50, 50, 50, 50, 50, 50,
@@ -62,30 +62,67 @@ const PST = {
         20, 30, 10,  0,  0, 10, 30, 20]
 };
 
+// ── Wskazówki (dłuższe, z tytułem) ────────────────────────────────────────
 const TIPS = [
-    '♟ Kontroluj centrum planszy pionkami e4 i d4.',
-    '♞ Rozwijaj skoczki i gońce zanim ruszysz wieże lub hetmana.',
-    '♔ Zrób rochade jak najszybciej, aby schować króla.',
-    '♛ Nie wyciągaj hetmana zbyt wcześnie — zostanie zaatakowany.',
-    '♖ Połącz wieże — postaw je na tej samej linii lub rzędzie.',
-    '♝ Para gońców jest bardzo silna w otwartych pozycjach.',
-    '⚔️ Przed atakiem upewnij się, że Twój król jest bezpieczny.',
-    '🔄 Skoczek porusza się w kształcie litery L i może przeskakiwać figury.',
-    '📖 Naucz się kilku prostych debiutów (np. e4 e5, d4 d5).',
-    '🏆 Jeśli masz przewagę materiałową — wymieniaj figury!',
-    '👀 Zawsze sprawdź, czy Twój ruch nie zostawia figury bez ochrony.',
-    '🎯 Pionek, który dotrze do ostatniego rzędu, staje się hetmanem.'
+    {
+        icon: '🎯', title: 'Kontroluj centrum',
+        text: 'Centrum planszy (pola e4, d4, e5, d5) to serce szachów — figury tam ustawione kontrolują więcej pól i mają więcej możliwości niż figury na skraju. Zacznij grę ruchem e2→e4 lub d2→d4, żeby od razu zająć centrum i dać gońcowi wolną drogę.'
+    },
+    {
+        icon: '♞', title: 'Rozwijaj figury szybko',
+        text: 'W debiucie ruszaj każdą figurę tylko raz i rozwijaj skoczki oraz gońce przed 10. ruchem. Nie trać tempa na wielokrotne ruszanie tą samą figurą — każdy ruch powinien przybliżać Cię do roszady i aktywacji wież.'
+    },
+    {
+        icon: '♔', title: 'Roszada — schowaj króla',
+        text: 'Roszada to specjalny ruch: król przesuwa się o 2 pola w stronę wieży, a wieża skacze na pole po drugiej stronie króla. Dzięki temu król chowa się za pionkami, a wieża wchodzi do gry. Zrób roszadę jak najszybciej — król w centrum jest łatwym celem ataku.'
+    },
+    {
+        icon: '♛', title: 'Nie wyciągaj hetmana za wcześnie',
+        text: 'Hetman to najpotężniejsza figura, ale jeśli wyjdzie w debiucie, przeciwnik będzie ją atakować pionkami i skoczkami — tracisz czas na ucieczkę zamiast rozwijać pozostałe figury. Poczekaj aż rozwiniesz skoczki, gońce i zroszujesz — dopiero wtedy użyj hetmana aktywnie.'
+    },
+    {
+        icon: '♖', title: 'Aktywuj wieże na otwartych liniach',
+        text: 'Wieże są potężne, ale tylko gdy mają wolną drogę — linie bez pionków nazywamy otwartymi. Po roszadzie postaw wieże na takich liniach. Podwojone wieże (obie na tej samej linii) tworzą ogromną presję i bardzo trudno je powstrzymać.'
+    },
+    {
+        icon: '♝', title: 'Para gońców to wielka siła',
+        text: 'Posiadanie obu gońców (jasno- i ciemnopolowego) jest bardzo silne — razem kontrolują pola obu kolorów. W otwartych pozycjach ich wartość rośnie znacznie. Uważaj, żeby własne pionki nie blokowały gońca — powinny stać na innym kolorze niż Twój goniec.'
+    },
+    {
+        icon: '⚔️', title: 'Bezpieczeństwo króla przed atakiem',
+        text: 'Zanim zaatakujesz, sprawdź czy Twój król jest bezpieczny — najlepiej za pionkami po roszadzie. Atakując z odsłoniętym królem ryzykujesz, że przeciwnik odpowie kontratakiem i będzie szybszy. Zasada: najpierw zadbaj o bezpieczeństwo, potem atakuj.'
+    },
+    {
+        icon: '🔄', title: 'Skoczek — wyjątkowa figura',
+        text: 'Skoczek porusza się w kształcie litery L: dwa pola w jednym kierunku i jedno prostopadłe. Jako jedyna figura może przeskakiwać inne — to czyni go nieocenionym w zamkniętych pozycjach. Skoczek jest najsilniejszy w centrum, a najsłabszy w rogach planszy, gdzie ma tylko 2 możliwe ruchy.'
+    },
+    {
+        icon: '💡', title: 'Twórz plany, nie tylko reaguj',
+        text: 'Zamiast reagować na każdy ruch przeciwnika, wyznacz sobie cel: zaatakuję skrzydło królewskie, wymienię gońce, otworzę linię dla wież. Mając plan łatwiej wybierasz kolejne ruchy. Szukaj słabości w pozycji przeciwnika — np. słabych pionków, odsłoniętego króla — i atakuj je systematycznie.'
+    },
+    {
+        icon: '🏆', title: 'Masz przewagę? Wymieniaj figury!',
+        text: 'Jeśli masz więcej materiału (np. wieżę za skoczka), upraszczaj pozycję wymieniając figury — im mniej figur na planszy, tym większa Twoja względna przewaga. Unikaj skomplikowanych kombinacji gdy możesz wygrać spokojnie. Zasada: przy przewadze wymieniaj figury, nie pionki.'
+    },
+    {
+        icon: '👀', title: 'Sprawdzaj każdy ruch przed wykonaniem',
+        text: 'Przed każdym ruchem zadaj sobie 3 pytania: Czy zostawiam figurę bez ochrony? Czy mój ruch osłabia króla? Czy przeciwnik może odpowiedzieć groźnym atakiem? Nawet 10 sekund refleksji eliminuje większość błędów popełnianych przez początkujących.'
+    },
+    {
+        icon: '🎖️', title: 'Promocja pionka — wielka nagroda',
+        text: 'Pionek który dotrze do ostatniego rzędu (rząd 8 dla białych) może zmienić się w dowolną figurę — prawie zawsze wybieramy hetmana. Pionek przechodni (bez przeciwnych pionków na jego drodze) jest ogromnym atutem w końcówce. Prowadź go do przodu — przeciwnik musi go zatrzymać za wszelką cenę.'
+    }
 ];
 
 // ── Stan gry ───────────────────────────────────────────────────────────────
 let chess;
-let selected      = null;   // zaznaczone pole
-let legalTargets  = [];     // pola legalnych ruchów
-let hintSquares   = [];     // podpowiedź
-let lastMove      = null;   // { from, to }
+let selected      = null;
+let legalTargets  = [];
+let hintSquares   = [];
+let lastMove      = null;
 let captured      = { w:[], b:[] };
 let isThinking    = false;
-let pendingPromo  = null;   // { from, to }
+let pendingPromo  = null;
 let tipIndex      = 0;
 let tipTimer      = null;
 
@@ -100,6 +137,10 @@ function init() {
     isThinking   = false;
     pendingPromo = null;
 
+    // Zwiń panele — rozwiną się po pierwszym ruchu
+    document.getElementById('card-captured').classList.remove('expanded');
+    document.getElementById('card-history').classList.remove('expanded');
+
     renderBoard();
     updateStatus();
     updateHistory();
@@ -107,14 +148,19 @@ function init() {
     startTips();
 }
 
+function expandPanels() {
+    document.getElementById('card-captured').classList.add('expanded');
+    document.getElementById('card-history').classList.add('expanded');
+}
+
 // ── Renderowanie planszy ───────────────────────────────────────────────────
 function renderBoard() {
     const boardEl = document.getElementById('board');
     boardEl.innerHTML = '';
 
-    const board    = chess.board();
-    const inCheck  = chess.in_check();
-    const kingPos  = inCheck ? findKing(chess.turn()) : null;
+    const board   = chess.board();
+    const inCheck = chess.in_check();
+    const kingPos = inCheck ? findKing(chess.turn()) : null;
 
     for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
@@ -124,20 +170,14 @@ function renderBoard() {
 
             const div = document.createElement('div');
             div.className = 'square ' + (isLight ? 'light' : 'dark');
-            div.dataset.sq = sq;
 
-            // Podświetlenia
-            if (sq === selected)                               div.classList.add('selected');
-            if (lastMove && (sq === lastMove.from || sq === lastMove.to))
-                                                               div.classList.add('last-move');
-            if (inCheck && sq === kingPos)                     div.classList.add('in-check');
-            if (hintSquares.includes(sq))                      div.classList.add('hint');
-
-            if (legalTargets.includes(sq)) {
+            if (sq === selected)                                         div.classList.add('selected');
+            if (lastMove && (sq === lastMove.from || sq === lastMove.to)) div.classList.add('last-move');
+            if (inCheck && sq === kingPos)                               div.classList.add('in-check');
+            if (hintSquares.includes(sq))                                div.classList.add('hint');
+            if (legalTargets.includes(sq))
                 div.classList.add(piece ? 'legal-capture' : 'legal-move');
-            }
 
-            // Figura
             if (piece) {
                 const span = document.createElement('span');
                 span.className = 'piece';
@@ -146,7 +186,6 @@ function renderBoard() {
                 div.appendChild(span);
             }
 
-            // Współrzędne
             if (col === 0) {
                 const r = document.createElement('span');
                 r.className = 'coord rank';
@@ -175,8 +214,7 @@ function findKing(color) {
     for (let r = 0; r < 8; r++)
         for (let c = 0; c < 8; c++) {
             const p = board[r][c];
-            if (p && p.type === 'k' && p.color === color)
-                return colRow(c, r);
+            if (p && p.type === 'k' && p.color === color) return colRow(c, r);
         }
     return null;
 }
@@ -184,7 +222,7 @@ function findKing(color) {
 // ── Kliknięcie w pole ──────────────────────────────────────────────────────
 function onSquareClick(sq) {
     if (isThinking || chess.game_over()) return;
-    if (chess.turn() !== 'w') return;  // gracz gra białymi
+    if (chess.turn() !== 'w') return;
 
     hintSquares = [];
     const piece = chess.get(sq);
@@ -200,9 +238,7 @@ function onSquareClick(sq) {
             renderBoard();
         }
     } else {
-        if (piece && piece.color === 'w') {
-            selectSquare(sq);
-        }
+        if (piece && piece.color === 'w') selectSquare(sq);
     }
 }
 
@@ -215,7 +251,6 @@ function selectSquare(sq) {
 // ── Wykonanie ruchu ────────────────────────────────────────────────────────
 function attemptMove(from, to) {
     const piece = chess.get(from);
-    // Sprawdź promocję pionka
     if (piece.type === 'p' && (to[1] === '8' || to[1] === '1')) {
         pendingPromo = { from, to };
         document.getElementById('promo-modal').classList.remove('hidden');
@@ -225,21 +260,18 @@ function attemptMove(from, to) {
 }
 
 function executeMove(from, to, promo) {
-    const moveObj = promo
-        ? chess.move({ from, to, promotion: promo })
-        : chess.move({ from, to });
-
+    const moveObj = chess.move(promo ? { from, to, promotion: promo } : { from, to });
     if (!moveObj) return;
 
     if (moveObj.captured) {
-        const side = moveObj.color === 'w' ? 'b' : 'w';
-        captured[side].push(moveObj.captured);
+        captured[moveObj.color === 'w' ? 'b' : 'w'].push(moveObj.captured);
     }
 
-    lastMove     = { from, to };
+    lastMove     = { from: moveObj.from, to: moveObj.to };
     selected     = null;
     legalTargets = [];
 
+    expandPanels();
     renderBoard();
     updateStatus();
     updateHistory();
@@ -257,10 +289,9 @@ function runAI() {
     const depth = parseInt(document.getElementById('difficulty').value, 10);
     const move  = bestMove(depth);
     if (move) {
-        chess.move(move);
-        if (move.captured) {
-            const side = move.color === 'w' ? 'b' : 'w';
-            captured[side].push(move.captured);
+        const result = chess.move(move);
+        if (result && result.captured) {
+            captured[result.color === 'w' ? 'b' : 'w'].push(result.captured);
         }
         lastMove = { from: move.from, to: move.to };
     }
@@ -275,11 +306,10 @@ function bestMove(depth) {
     const moves = chess.moves({ verbose: true });
     if (!moves.length) return null;
 
-    // Losowe przetasowanie (różnorodność na tym samym poziomie oceny)
     moves.sort(() => Math.random() - 0.5);
 
     let best  = null;
-    let bestS = Infinity;  // AI = czarne = minimalizuje
+    let bestS = Infinity;
 
     for (const m of moves) {
         chess.move(m);
@@ -323,15 +353,14 @@ function evaluate() {
 
     let score = 0;
     const board = chess.board();
-    for (let r = 0; r < 8; r++) {
+    for (let r = 0; r < 8; r++)
         for (let c = 0; c < 8; c++) {
             const p = board[r][c];
             if (!p) continue;
-            const pstIdx = p.color === 'w' ? r * 8 + c : (7 - r) * 8 + c;
-            const s = VAL[p.type] + PST[p.type][pstIdx];
+            const idx = p.color === 'w' ? r * 8 + c : (7 - r) * 8 + c;
+            const s = VAL[p.type] + PST[p.type][idx];
             score += p.color === 'w' ? s : -s;
         }
-    }
     return score;
 }
 
@@ -348,13 +377,29 @@ function showHint() {
 // ── Cofnij ruch ────────────────────────────────────────────────────────────
 function undoMove() {
     if (isThinking) return;
-    chess.undo();  // cofnij ruch AI
-    chess.undo();  // cofnij ruch gracza
+    if (!chess.history().length) return;
+
+    chess.undo(); // cofnij ostatni ruch (AI lub gracza)
+    // jeśli teraz jest kolej czarnych, cofnij też ruch gracza
+    if (chess.turn() !== 'w' && chess.history().length > 0) chess.undo();
+
     recalcCaptured();
-    lastMove     = null;
+
+    const hist = chess.history({ verbose: true });
+    lastMove = hist.length
+        ? { from: hist[hist.length - 1].from, to: hist[hist.length - 1].to }
+        : null;
+
     selected     = null;
     legalTargets = [];
     hintSquares  = [];
+
+    // Zwiń panele z powrotem jeśli cofnęliśmy do początku
+    if (!chess.history().length) {
+        document.getElementById('card-captured').classList.remove('expanded');
+        document.getElementById('card-history').classList.remove('expanded');
+    }
+
     renderBoard();
     updateStatus();
     updateHistory();
@@ -364,10 +409,7 @@ function undoMove() {
 function recalcCaptured() {
     captured = { w:[], b:[] };
     for (const m of chess.history({ verbose: true })) {
-        if (m.captured) {
-            const side = m.color === 'w' ? 'b' : 'w';
-            captured[side].push(m.captured);
-        }
+        if (m.captured) captured[m.color === 'w' ? 'b' : 'w'].push(m.captured);
     }
 }
 
@@ -377,8 +419,7 @@ function updateStatus() {
     el.className = 'status-box';
 
     if (chess.in_checkmate()) {
-        const w = chess.turn() === 'w' ? 'Czarne' : 'Białe';
-        el.textContent = `Mat! ${w} wygrały! 🏆`;
+        el.textContent = (chess.turn() === 'w' ? 'Czarne' : 'Białe') + ' wygrały! Mat! 🏆';
         el.classList.add('checkmate');
     } else if (chess.in_stalemate()) {
         el.textContent = 'Pat! Remis! 🤝';
@@ -390,8 +431,7 @@ function updateStatus() {
         el.textContent = 'AI myśli… 🤔';
         el.classList.add('thinking');
     } else if (chess.in_check()) {
-        const w = chess.turn() === 'w' ? 'Ty (białe)' : 'AI (czarne)';
-        el.textContent = `Szach! Musi ruszać: ${w} ⚠️`;
+        el.textContent = (chess.turn() === 'w' ? 'Szach! Twój król jest atakowany ⚠️' : 'Szach! Król AI jest atakowany ⚠️');
         el.classList.add('check');
     } else {
         el.textContent = chess.turn() === 'w' ? 'Twoja kolej (Białe)' : 'Kolej AI (Czarne)';
@@ -401,13 +441,10 @@ function updateStatus() {
 function updateHistory() {
     const el   = document.getElementById('move-history');
     const hist = chess.history();
+    if (!hist.length) { el.innerHTML = ''; return; }
     let html = '<table>';
     for (let i = 0; i < hist.length; i += 2) {
-        html += `<tr>
-            <td class="move-num">${Math.floor(i / 2) + 1}.</td>
-            <td>${hist[i]}</td>
-            <td>${hist[i + 1] || ''}</td>
-        </tr>`;
+        html += `<tr><td class="move-num">${Math.floor(i / 2) + 1}.</td><td>${hist[i]}</td><td>${hist[i + 1] || ''}</td></tr>`;
     }
     html += '</table>';
     el.innerHTML = html;
@@ -415,19 +452,19 @@ function updateHistory() {
 }
 
 function updateCaptured() {
-    const capSym = { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛' };
-    const whiSym = { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕' };
+    const bSym = { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛' };
+    const wSym = { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕' };
 
     document.getElementById('captured-by-white').innerHTML =
-        `<span class="cap-label">Zdobyte przez Ciebie:</span>` +
-        captured.b.map(t => capSym[t] || '').join(' ');
+        '<span class="cap-label">Zdobyte przez Ciebie:</span> ' +
+        (captured.b.map(t => bSym[t] || '').join(' ') || '—');
 
     document.getElementById('captured-by-black').innerHTML =
-        `<span class="cap-label">Zdobyte przez AI:</span>` +
-        captured.w.map(t => whiSym[t] || '').join(' ');
+        '<span class="cap-label">Zdobyte przez AI:</span> ' +
+        (captured.w.map(t => wSym[t] || '').join(' ') || '—');
 }
 
-// ── Wskazówki (rotujące co 6 s) ───────────────────────────────────────────
+// ── Wskazówki ──────────────────────────────────────────────────────────────
 function startTips() {
     clearTimeout(tipTimer);
     tipIndex = 0;
@@ -435,9 +472,12 @@ function startTips() {
 }
 
 function showTip() {
-    document.getElementById('tip-text').textContent = TIPS[tipIndex % TIPS.length];
+    const tip = TIPS[tipIndex % TIPS.length];
+    document.getElementById('tip-icon').textContent  = tip.icon;
+    document.getElementById('tip-title').textContent = tip.title;
+    document.getElementById('tip-body').textContent  = tip.text;
     tipIndex++;
-    tipTimer = setTimeout(showTip, 6000);
+    tipTimer = setTimeout(showTip, 9000);
 }
 
 // ── Promocja pionka ────────────────────────────────────────────────────────
