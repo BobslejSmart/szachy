@@ -15,7 +15,7 @@
     --radius-sm:   8px;
 
     /* Rozmiar planszy — jeden punkt prawdy dla board + side-panel */
-    --board-size:         clamp(360px, calc(100vw - 420px), 540px);
+    --board-size:         clamp(420px, calc(100vw - 580px), 580px);
     --board-section-h:    calc(var(--board-size) + 24px);
 }
 
@@ -39,7 +39,7 @@ header {
     z-index: 50;
 }
 .header-inner {
-    max-width: 1100px;
+    max-width: 1440px;
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -55,7 +55,7 @@ header h1 {
 header p   { font-size: 0.85rem; color: var(--muted); }
 
 /* ── Layout ────────────────────────────────────────────── */
-main { max-width: 1100px; margin: 0 auto; padding: 20px 20px 0; }
+main { max-width: 1440px; margin: 0 auto; padding: 20px 28px 0; }
 
 .game-container {
     display: flex;
@@ -155,8 +155,8 @@ main { max-width: 1100px; margin: 0 auto; padding: 20px 20px 0; }
 /* ── Side panel ────────────────────────────────────────── */
 .side-panel {
     flex: 1;
-    min-width: 280px;
-    max-width: 340px;
+    min-width: 300px;
+    max-width: 560px;
     height: var(--board-section-h);
     display: flex;
     flex-direction: column;
@@ -628,15 +628,25 @@ h3 {
 #chat-send:active { transform: scale(0.96); }
 #chat-send:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* ── Responsive ────────────────────────────────────────── */
-@media (max-width: 800px) {
+/* ── Responsive — tablet (≤1024px) ────────────────────── */
+@media (max-width: 1024px) {
     :root {
-        --board-size:      min(560px, calc(100vw - 40px));
+        --board-size:      clamp(360px, calc(100vw - 480px), 480px);
+        --board-section-h: calc(var(--board-size) + 24px);
+    }
+    .side-panel { max-width: 420px; }
+}
+
+/* ── Responsive — mobilne (≤720px) ────────────────────── */
+@media (max-width: 720px) {
+    :root {
+        --board-size:      min(480px, calc(100vw - 32px));
         --board-section-h: auto;
     }
+    main { padding: 12px 12px 0; }
     .game-container {
         flex-direction: column;
-        flex-wrap: wrap;
+        gap: 12px;
     }
     .side-panel {
         max-width: 100%;
@@ -646,7 +656,9 @@ h3 {
     }
     .panel-top {
         overflow-y: visible;
-        height: auto;
+        max-height: none;
     }
-    .chat-messages { height: 220px; }
+    .settings-row { flex-direction: column; }
+    .chat-messages { height: 200px; }
+    .chat-panel { margin-top: 12px; padding-top: 12px; }
 }
