@@ -181,6 +181,7 @@ function renderBoard() {
             if (piece) {
                 const span = document.createElement('span');
                 span.className = 'piece';
+                if (lastMove && sq === lastMove.to) span.classList.add('just-landed');
                 span.textContent = SYM[piece.color + piece.type.toUpperCase()];
                 span.title = NAMES[piece.type.toUpperCase()];
                 div.appendChild(span);
@@ -199,6 +200,7 @@ function renderBoard() {
                 div.appendChild(f);
             }
 
+            div.dataset.sq = sq;
             div.addEventListener('click', () => onSquareClick(sq));
             boardEl.appendChild(div);
         }
@@ -248,6 +250,49 @@ function selectSquare(sq) {
     renderBoard();
 }
 
+// ── Animacja ruchu figury ──────────────────────────────────────────────────
+function animatePieceMove(from, to, callback) {
+    const boardEl = document.getElementById('board');
+    const fromEl  = boardEl.querySelector(`[data-sq="${from}"]`);
+    const toEl    = boardEl.querySelector(`[data-sq="${to}"]`);
+    if (!fromEl || !toEl) { callback(); return; }
+
+    const pieceEl = fromEl.querySelector('.piece');
+    if (!pieceEl) { callback(); return; }
+
+    const fr = fromEl.getBoundingClientRect();
+    const tr = toEl.getBoundingClientRect();
+
+    const clone = pieceEl.cloneNode(true);
+    clone.classList.remove('just-landed');
+    Object.assign(clone.style, {
+        position:       'fixed',
+        left:           fr.left + 'px',
+        top:            fr.top  + 'px',
+        width:          fr.width  + 'px',
+        height:         fr.height + 'px',
+        display:        'flex',
+        alignItems:     'center',
+        justifyContent: 'center',
+        zIndex:         '9999',
+        pointerEvents:  'none',
+        margin:         '0',
+        transition:     'left 0.18s cubic-bezier(0.4,0,0.2,1), top 0.18s cubic-bezier(0.4,0,0.2,1)',
+    });
+
+    document.body.appendChild(clone);
+    pieceEl.style.opacity = '0';
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            clone.style.left = tr.left + 'px';
+            clone.style.top  = tr.top  + 'px';
+        });
+    });
+
+    setTimeout(() => { clone.remove(); callback(); }, 200);
+}
+
 // ── Wykonanie ruchu ────────────────────────────────────────────────────────
 function attemptMove(from, to) {
     const piece = chess.get(from);
@@ -272,16 +317,19 @@ function executeMove(from, to, promo) {
     legalTargets = [];
 
     expandPanels();
-    renderBoard();
-    updateStatus();
-    updateHistory();
-    updateCaptured();
 
-    if (!chess.game_over() && chess.turn() === 'b') {
-        isThinking = true;
+    animatePieceMove(from, to, () => {
+        renderBoard();
         updateStatus();
-        setTimeout(runAI, 250);
-    }
+        updateHistory();
+        updateCaptured();
+
+        if (!chess.game_over() && chess.turn() === 'b') {
+            isThinking = true;
+            updateStatus();
+            setTimeout(runAI, 250);
+        }
+    });
 }
 
 // ── AI (minimax + alpha-beta) ──────────────────────────────────────────────
@@ -294,12 +342,20 @@ function runAI() {
             captured[result.color === 'w' ? 'b' : 'w'].push(result.captured);
         }
         lastMove = { from: move.from, to: move.to };
+        animatePieceMove(move.from, move.to, () => {
+            isThinking = false;
+            renderBoard();
+            updateStatus();
+            updateHistory();
+            updateCaptured();
+        });
+    } else {
+        isThinking = false;
+        renderBoard();
+        updateStatus();
+        updateHistory();
+        updateCaptured();
     }
-    isThinking = false;
-    renderBoard();
-    updateStatus();
-    updateHistory();
-    updateCaptured();
 }
 
 function bestMove(depth) {
