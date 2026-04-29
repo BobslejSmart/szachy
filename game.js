@@ -116,15 +116,17 @@ const TIPS = [
 
 // ── Stan gry ───────────────────────────────────────────────────────────────
 let chess;
-let selected      = null;
-let legalTargets  = [];
-let hintSquares   = [];
-let lastMove      = null;
-let captured      = { w:[], b:[] };
-let isThinking    = false;
-let pendingPromo  = null;
-let tipIndex      = 0;
-let tipTimer      = null;
+let selected          = null;
+let legalTargets      = [];
+let hintSquares       = [];
+let lastMove          = null;
+let captured          = { w:[], b:[] };
+let isThinking        = false;
+let pendingPromo      = null;
+let tipIndex          = 0;
+let tipTimer          = null;
+let commentaryEnabled = true;
+let commentaryHistory = [];
 
 // ── Inicjalizacja ──────────────────────────────────────────────────────────
 function init() {
@@ -323,6 +325,7 @@ function executeMove(from, to, promo) {
         updateStatus();
         updateHistory();
         updateCaptured();
+        autoComment(moveObj);
 
         if (!chess.game_over() && chess.turn() === 'b') {
             isThinking = true;
@@ -348,6 +351,7 @@ function runAI() {
             updateStatus();
             updateHistory();
             updateCaptured();
+            autoComment(result);
         });
     } else {
         isThinking = false;
@@ -560,9 +564,51 @@ document.querySelectorAll('.promo-choices button').forEach(btn => {
 });
 
 // ── Przyciski ──────────────────────────────────────────────────────────────
-document.getElementById('btn-new').addEventListener('click', init);
+document.getElementById('btn-new').addEventListener('click', () => {
+    commentaryHistory = [];
+    init();
+});
 document.getElementById('btn-undo').addEventListener('click', undoMove);
 document.getElementById('btn-hint').addEventListener('click', showHint);
+
+document.getElementById('commentary-toggle').addEventListener('change', e => {
+    commentaryEnabled = e.target.checked;
+});
+
+// ── Automatyczny komentarz AI ──────────────────────────────────────────────
+async function autoComment(move) {
+    if (!commentaryEnabled) return;
+
+    const pieceName  = NAMES[move.piece.toUpperCase()] || move.piece;
+    const isWhite    = move.color === 'w';
+    const captureStr = move.captured ? `, bijąc ${NAMES[move.captured.toUpperCase()] || move.captured}` : '';
+    const san        = move.san || `${move.from}→${move.to}`;
+    const who        = isWhite ? 'Gracz zagrał' : 'AI zagrało';
+    const msg        = `${who} ${pieceName} ${san}${captureStr}. Skomentuj ten ruch jednym krótkim zdaniem po polsku — dla początkującego gracza.`;
+
+    const thinkingEl = appendMsg('assistant', '📝 …', 'thinking');
+
+    try {
+        const res = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: msg,
+                fen:         chess.fen(),
+                turn:        chess.turn(),
+                moveHistory: chess.history().join(' ') || null,
+                history:     commentaryHistory
+            })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        thinkingEl.remove();
+        commentaryHistory = data.history || commentaryHistory;
+        if (data.text) appendMsg('assistant', '📝 ' + escapeHtml(data.text), 'commentary');
+    } catch {
+        thinkingEl.remove();
+    }
+}
 
 // ── Chat z AI ─────────────────────────────────────────────────────────────
 let chatHistory = [];
