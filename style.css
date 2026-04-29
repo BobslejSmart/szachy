@@ -51,13 +51,13 @@ header h1 {
 header p   { font-size: 0.85rem; color: var(--muted); }
 
 /* ── Layout ────────────────────────────────────────────── */
-main { max-width: 1100px; margin: 28px auto; padding: 0 20px; }
+main { max-width: 1100px; margin: 0 auto; padding: 20px 20px 0; }
 
 .game-container {
     display: flex;
-    gap: 24px;
-    align-items: flex-start;
-    flex-wrap: wrap;
+    gap: 20px;
+    align-items: stretch;
+    flex-wrap: nowrap;
 }
 
 /* ── Board section ─────────────────────────────────────── */
@@ -72,8 +72,8 @@ main { max-width: 1100px; margin: 28px auto; padding: 0 20px; }
 #board {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
-    width:  min(560px, calc(100vw - 72px));
-    height: min(560px, calc(100vw - 72px));
+    width:  min(540px, calc(100vw - 400px));
+    height: min(540px, calc(100vw - 400px));
     border-radius: 3px;
     overflow: hidden;
     user-select: none;
@@ -150,11 +150,60 @@ main { max-width: 1100px; margin: 28px auto; padding: 0 20px; }
 /* ── Side panel ────────────────────────────────────────── */
 .side-panel {
     flex: 1;
-    min-width: 260px;
-    max-width: 320px;
+    min-width: 280px;
+    max-width: 340px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    overflow: hidden;
+}
+
+/* Scrollowalna górna część */
+.panel-top {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+.panel-top::-webkit-scrollbar { width: 3px; }
+.panel-top::-webkit-scrollbar-track { background: transparent; }
+.panel-top::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Difficulty + toggle w jednym rzędzie */
+.settings-row {
+    display: flex;
+    gap: 8px;
+}
+.settings-row .difficulty-row {
+    flex: 1;
+}
+.commentary-row {
+    flex-shrink: 0;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+}
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.toggle-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .status-box {
@@ -359,17 +408,6 @@ h3 {
 .piece-values span:hover { color: var(--accent); }
 
 /* ── Commentary toggle ─────────────────────────────────── */
-.commentary-row { padding: 11px 16px; }
-.toggle-label {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    cursor: pointer;
-}
-.toggle-text { display: flex; flex-direction: column; gap: 1px; }
-.toggle-name { font-size: 0.85rem; font-weight: 600; color: var(--text); }
-.toggle-desc { font-size: 0.7rem; color: var(--muted); }
 
 .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
 .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
@@ -471,33 +509,37 @@ h3 {
     transform: scale(1.06);
 }
 
-/* ── Chat ──────────────────────────────────────────────── */
-.chat-section {
-    max-width: 1100px;
-    margin: 0 auto 40px;
-    padding: 0 20px;
+/* ── Chat panel (przypięty na dole side-panel) ──────────── */
+.chat-panel {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+    margin-top: 8px;
+    /* wysokość = wiadomości ~160px + header + input */
 }
-.chat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.chat-icon { font-size: 1.3rem; }
-.chat-header h2 { font-size: 1rem; font-weight: 700; letter-spacing: -0.01em; }
-.chat-subtitle { font-size: 0.8rem; color: var(--muted); }
+.chat-header { display: flex; align-items: center; gap: 8px; }
+.chat-icon { font-size: 1.2rem; }
+.chat-header h2 { font-size: 0.9rem; font-weight: 700; letter-spacing: -0.01em; }
+.chat-subtitle { font-size: 0.75rem; color: var(--muted); }
 
 .chat-messages {
     background: var(--surface);
     border: 1.5px solid var(--border);
     border-radius: var(--radius);
-    padding: 16px;
-    min-height: 120px;
-    max-height: 260px;
+    padding: 12px;
+    height: 180px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     box-shadow: var(--shadow);
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
 }
-.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar { width: 3px; }
 .chat-messages::-webkit-scrollbar-track { background: transparent; }
 .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
@@ -581,9 +623,22 @@ h3 {
 #chat-send:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ── Responsive ────────────────────────────────────────── */
-@media (max-width: 680px) {
-    .game-container { flex-direction: column; }
-    .side-panel { max-width: 100%; min-width: 100%; }
+@media (max-width: 800px) {
+    .game-container {
+        flex-direction: column;
+        flex-wrap: wrap;
+    }
+    .side-panel {
+        max-width: 100%;
+        min-width: 100%;
+        height: auto;
+        overflow: visible;
+    }
+    .panel-top {
+        overflow-y: visible;
+        height: auto;
+    }
+    .chat-messages { height: 220px; }
     #board {
         width:  min(560px, calc(100vw - 56px));
         height: min(560px, calc(100vw - 56px));
