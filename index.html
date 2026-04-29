@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+1<!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
@@ -44,23 +44,34 @@
                     </select>
                 </div>
 
-                <!-- Zbite figury -->
-                <div class="panel-card">
+                <!-- Zbite figury — pojawia się po pierwszym ruchu -->
+                <div class="panel-card collapsible" id="card-captured">
                     <h3>Zbite figury</h3>
                     <div id="captured-by-white"></div>
                     <div id="captured-by-black"></div>
                 </div>
 
-                <!-- Historia ruchów -->
-                <div class="panel-card">
+                <!-- Historia ruchów — pojawia się po pierwszym ruchu -->
+                <div class="panel-card collapsible" id="card-history">
                     <h3>Historia ruchów</h3>
                     <div id="move-history"></div>
                 </div>
 
                 <!-- Wskazówki -->
                 <div class="panel-card tips-card">
-                    <h3>Wskazówka dla początkujących</h3>
-                    <div id="tip-text"></div>
+                    <div class="tips-top">
+                        <h3>Wskazówka dla początkujących</h3>
+                        <div class="tip-nav">
+                            <button id="tip-prev" title="Poprzednia">&#8249;</button>
+                            <span id="tip-counter"></span>
+                            <button id="tip-next" title="Następna">&#8250;</button>
+                        </div>
+                    </div>
+                    <div class="tip-header">
+                        <span id="tip-icon"></span>
+                        <strong id="tip-title"></strong>
+                    </div>
+                    <p id="tip-body"></p>
                 </div>
 
                 <!-- Wartości figur -->
@@ -91,6 +102,24 @@
             </div>
         </div>
     </div>
+
+    <!-- Panel czatu z AI -->
+    <section class="chat-section">
+        <div class="chat-header">
+            <span class="chat-icon">🤖</span>
+            <h2>Trener AI</h2>
+            <span class="chat-subtitle">Zapytaj o szachy lub wydaj polecenie</span>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="chat-msg assistant">
+                <span class="msg-bubble">Cześć! Jestem Twoim trenerem szachowym. Możesz mnie zapytać o zasady, strategię, albo powiedzieć np. <em>"zrób roszadę"</em> czy <em>"zagraj e4"</em> — wykonam ruch za Ciebie!</span>
+            </div>
+        </div>
+        <div class="chat-input-row">
+            <input type="text" id="chat-input" placeholder="Zapytaj o szachy lub wydaj polecenie…" autocomplete="off">
+            <button id="chat-send">Wyślij</button>
+        </div>
+    </section>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="game.js"></script>
