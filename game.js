@@ -604,7 +604,7 @@ async function autoComment(move) {
         const data = await res.json();
         thinkingEl.remove();
         commentaryHistory = data.history || commentaryHistory;
-        if (data.text) appendMsg('assistant', '📝 ' + escapeHtml(data.text), 'commentary');
+        if (data.text) appendMsg('assistant', '📝 ' + mdToHtml(data.text), 'commentary');
     } catch {
         thinkingEl.remove();
     }
@@ -659,7 +659,7 @@ async function sendChat() {
         chatHistory = data.history || chatHistory;
 
         if (data.text) {
-            appendMsg('assistant', escapeHtml(data.text));
+            appendMsg('assistant', mdToHtml(data.text));
         }
 
         if (data.move && chess.turn() === 'w' && !chess.game_over()) {
@@ -685,6 +685,12 @@ async function sendChat() {
 
 function escapeHtml(str) {
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function mdToHtml(str) {
+    return escapeHtml(str)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>');
 }
 
 document.getElementById('chat-send').addEventListener('click', sendChat);
