@@ -472,13 +472,24 @@ function startTips() {
 }
 
 function showTip() {
-    const tip = TIPS[tipIndex % TIPS.length];
-    document.getElementById('tip-icon').textContent  = tip.icon;
-    document.getElementById('tip-title').textContent = tip.title;
-    document.getElementById('tip-body').textContent  = tip.text;
-    tipIndex++;
-    tipTimer = setTimeout(showTip, 9000);
+    clearTimeout(tipTimer);
+    const i   = ((tipIndex % TIPS.length) + TIPS.length) % TIPS.length;
+    const tip = TIPS[i];
+    document.getElementById('tip-icon').textContent    = tip.icon;
+    document.getElementById('tip-title').textContent   = tip.title;
+    document.getElementById('tip-body').textContent    = tip.text;
+    document.getElementById('tip-counter').textContent = `${i + 1}/${TIPS.length}`;
+    tipTimer = setTimeout(() => { tipIndex++; showTip(); }, 9000);
 }
+
+document.getElementById('tip-next').addEventListener('click', () => {
+    tipIndex++;
+    showTip();
+});
+document.getElementById('tip-prev').addEventListener('click', () => {
+    tipIndex--;
+    showTip();
+});
 
 // ── Promocja pionka ────────────────────────────────────────────────────────
 document.querySelectorAll('.promo-choices button').forEach(btn => {
@@ -496,6 +507,88 @@ document.querySelectorAll('.promo-choices button').forEach(btn => {
 document.getElementById('btn-new').addEventListener('click', init);
 document.getElementById('btn-undo').addEventListener('click', undoMove);
 document.getElementById('btn-hint').addEventListener('click', showHint);
+
+// ── Chat z AI ─────────────────────────────────────────────────────────────
+let chatHistory = [];
+
+function appendMsg(role, text, extra = '') {
+    const wrap = document.getElementById('chat-messages');
+    const div  = document.createElement('div');
+    div.className = `chat-msg ${role}${extra ? ' ' + extra : ''}`;
+    const bubble = document.createElement('span');
+    bubble.className = 'msg-bubble';
+    bubble.innerHTML = text;
+    div.appendChild(bubble);
+    wrap.appendChild(div);
+    wrap.scrollTop = wrap.scrollHeight;
+    return div;
+}
+
+async function sendChat() {
+    const input = document.getElementById('chat-input');
+    const btn   = document.getElementById('chat-send');
+    const msg   = input.value.trim();
+    if (!msg) return;
+
+    input.value = '';
+    btn.disabled = true;
+
+    appendMsg('user', escapeHtml(msg));
+
+    const thinking = appendMsg('assistant', 'Myślę…', 'thinking');
+
+    try {
+        const res = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: msg,
+                fen: chess.fen(),
+                turn: chess.turn(),
+                moveHistory: chess.history().join(' ') || null,
+                history: chatHistory
+            })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        thinking.remove();
+        chatHistory = data.history || chatHistory;
+
+        if (data.text) {
+            appendMsg('assistant', escapeHtml(data.text));
+        }
+
+        if (data.move && chess.turn() === 'w' && !chess.game_over()) {
+            const { from, to, promotion } = data.move;
+            const legal = chess.moves({ verbose: true });
+            const isLegal = legal.some(m => m.from === from && m.to === to);
+
+            if (isLegal) {
+                executeMove(from, to, promotion || null);
+                appendMsg('assistant', `Wykonuję ruch: <strong>${from}→${to}</strong>`, 'move-confirm');
+            } else {
+                appendMsg('assistant', `Ruch ${from}→${to} jest nielegalny w tej pozycji.`);
+            }
+        }
+    } catch (err) {
+        thinking.remove();
+        appendMsg('assistant', `Błąd połączenia z serwerem AI (${escapeHtml(err.message)}). Uruchom <code>node server.js</code> w folderze szachy.`);
+    }
+
+    btn.disabled = false;
+    input.focus();
+}
+
+function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.getElementById('chat-send').addEventListener('click', sendChat);
+document.getElementById('chat-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendChat();
+});
 
 // ── Start ──────────────────────────────────────────────────────────────────
 init();
